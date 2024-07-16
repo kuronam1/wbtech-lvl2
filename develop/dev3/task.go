@@ -25,7 +25,7 @@ var (
 	column        int
 	delimiter     = " "
 	argumentErr   = errors.New("need one file\nusage: ./task [options] filename")
-	convertingErr = errors.New("err while coverting number:")
+	convertingErr = errors.New("err while converting number")
 )
 
 func main() {
@@ -156,7 +156,7 @@ func defaultSorting(scanner *bufio.Scanner) {
 			line := scanner.Text()
 
 			if ignoreTales {
-				line := strings.TrimSpace(line)
+				line = strings.TrimSpace(line)
 			}
 
 			num := mustAtoi(line)
