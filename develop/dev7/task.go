@@ -5,7 +5,6 @@ import (
 	"time"
 )
 
-// convertChannels... сделать выход из goroutine
 func convertChannels(channels ...chan interface{}) <-chan interface{} {
 	outputChan := make(chan interface{})
 
