@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"events/task/internal/appErrors"
 	"events/task/internal/event"
-	"events/task/internal/parser/validator"
 	"io"
 )
 
@@ -17,7 +16,7 @@ func ParseRequest(body io.ReadCloser) (event.Event, error) {
 			appErrors.WrapErr(functionName, "error while parsing request:", err)
 	}
 
-	if err := validator.ValidateStruct(result); err != nil {
+	if err := result.Validate(); err != nil {
 		return result, appErrors.WrapErr(functionName, "error while validating request:", err)
 	}
 

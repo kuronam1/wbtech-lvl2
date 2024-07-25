@@ -1,17 +1,28 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"os"
 	"time"
 )
 
 func convertChannels(channels ...chan interface{}) <-chan interface{} {
 	outputChan := make(chan interface{})
 
+	ctx, cancel := context.WithCancel(context.Background())
 	for _, channel := range channels {
-		go func(listen, done chan interface{}) {
-			done <- <-listen
-		}(channel, outputChan)
+		go func(listen, done chan interface{}, cancelFunc context.CancelFunc) {
+			select {
+			case <-ctx.Done():
+				fmt.Fprintf(os.Stdout, "closing\n")
+				return
+			case s := <-listen:
+				done <- s
+				cancelFunc()
+				close(done)
+			}
+		}(channel, outputChan, cancel)
 	}
 
 	return outputChan

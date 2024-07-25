@@ -3,11 +3,12 @@ package event
 import "time"
 
 type Event struct {
-	Date        time.Time
-	Description Description
+	Date        time.Time   `json:"date"`
+	Description Description `json:"description"`
 }
 
 type Description struct {
-	Name            string
-	DescriptionText string
+	Time time.Time `json:"time"`
+	Name string    `json:"name"`
+	Text string    `json:"text"`
 }

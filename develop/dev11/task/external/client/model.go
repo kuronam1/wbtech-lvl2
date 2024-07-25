@@ -15,20 +15,22 @@ type client struct {
 	logger *slog.Logger
 }
 
-func (c *client) GetEventsFromFile() ([]event.Event, error) {
+func (c *client) GetEventsFromFile() (map[time.Time][]event.Description, error) {
 	const function = "client.GetEventsFromFile"
-	events := make([]event.Event, 0, 10)
+	events := make(map[time.Time][]event.Description)
 
 	reader := csv.NewReader(c.data)
 	c.logger.Debug("starting reading loop")
+
 	for {
 		record, err := reader.Read()
 		if err != nil {
 			if err == io.EOF {
 				c.logger.Debug("reached end of the file")
 				break
+			} else {
+				return nil, appErrors.WrapErr(function, "error while reading csv line:", err)
 			}
-			return nil, appErrors.WrapErr(function, "error while reading csv line:", err)
 		}
 
 		date, err := time.Parse(time.DateOnly, record[0])
@@ -36,40 +38,46 @@ func (c *client) GetEventsFromFile() ([]event.Event, error) {
 			return nil, appErrors.WrapErr(function, "error while parsing event date", err)
 		}
 
-		events = append(events, event.Event{
-			Date: date,
-			Description: event.Description{
-				Name:            record[1],
-				DescriptionText: record[2],
-			},
+		eventTime, err := time.Parse(time.TimeOnly, record[1])
+		if err != nil {
+			return nil, appErrors.WrapErr(function, "error while parsing event time", err)
+		}
+
+		events[date] = append(events[date], event.Description{
+			Time: eventTime,
+			Name: record[2],
+			Text: record[3],
 		})
 	}
 
 	return events, nil
 }
 
-func (c *client) SaveEventsToFile(events []event.Event) (err error) {
+func (c *client) SaveEventsToFile(events map[time.Time][]event.Description) (err error) {
 	const functionName = "client.SaveEventsToFile"
 
 	csvWriter := csv.NewWriter(c.data)
 	c.logger.Info("starting writing loop")
 
-	for _, element := range events {
-		eventRecord := eventToSlice(element)
+	for key, element := range events {
+		for _, eventDescription := range element {
+			eventRecord := eventToSlice(key, eventDescription)
 
-		if err = csvWriter.Write(eventRecord); err != nil {
-			return appErrors.WrapErr(functionName, "error while saving event", err)
+			if err = csvWriter.Write(eventRecord); err != nil {
+				return appErrors.WrapErr(functionName, "error while saving event", err)
+			}
+
+			csvWriter.Flush()
 		}
 	}
-	csvWriter.Flush()
 
 	if err = csvWriter.Error(); err != nil {
 		return appErrors.WrapErr(functionName, "error: ", err)
 	}
 
-	return
+	return nil
 }
 
-func eventToSlice(event event.Event) []string {
-	return []string{event.Date.String(), event.Description.Name, event.Description.DescriptionText}
+func eventToSlice(date time.Time, description event.Description) []string {
+	return []string{date.String(), description.Time.String(), description.Name, description.Text}
 }

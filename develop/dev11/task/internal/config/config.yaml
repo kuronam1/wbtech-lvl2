@@ -1,0 +1,7 @@
+pathToData: "data.csv"
+server:
+  host: "localhost"
+  port: 8080
+  readTimeout: "5s"
+  writeTimeout: "5s"
+  shutdownTime: "5s"
