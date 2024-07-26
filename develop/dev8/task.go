@@ -35,7 +35,6 @@ func main() {
 		commands := strings.Split(inputLine, "|")
 
 		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
 
 		cmds := make([]cmd, 0, 2)
 		errChan := make(chan error)
@@ -74,6 +73,7 @@ func main() {
 			lastPipe = cmds[i].stdout
 		}
 	}
+	cancel()
 }
 
 func (c *cmd) Execute() error {
